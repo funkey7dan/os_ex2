@@ -50,10 +50,38 @@ int main(int argc, char *argv[]) {
             // if we finished the files check if there was a minor difference
             return similiarFlag ? 3 : 1;
         }
-        // if only one of the files ended before the other
-        if (res1 == 0 || res2 == 0) {
-            exitHandler(file1, file2);
-            return 2;
+        // if the first file ended, check if the second didn't end because of blank space \ newline
+        if (res1 == 0) {
+            while (char2 == '\n' || char2 == ' ') {
+                res2 = read(file2, &char2, 1);
+                if (res2 < 0) {
+                    perror("Seek failure!");
+                    exitHandler(file1, file2);
+                    return -1;
+                }
+                // if we finished the second file and it was
+                if (res2 == 0) {
+                    break;
+                }
+            }
+            if (char1 == char2 || abs(char1 - char2) == 32 || char2 == '\n' || char2 == ' ') return 3;
+            else return 2;
+        }
+        if (res2 == 0) {
+            while (char1 == '\n' || char1 == ' ') {
+                res1 = read(file1, &char1, 1);
+                if (res1 < 0) {
+                    perror("Seek failure!");
+                    exitHandler(file1, file2);
+                    return -1;
+                }
+                // if we finished the second file and it was only allowed chars
+                if (res1 == 0) {
+                    break;
+                }
+            }
+            if (char1 == char2 || abs(char1 - char2) == 32 || char1 == '\n' || char1 == ' ') return 3;
+            else return 2;
         }
         // different chars read
         while (char1 != char2) {
