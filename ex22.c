@@ -9,7 +9,7 @@
 
 #define CONF_MAX 150
 
-int compareFiles(const char *work_dir, int csvFD, struct dirent *pDirent) {
+int compareFiles(const char *work_dir, int csvFD, struct dirent *pDirent,char* correctPath) {
     int gcp1, // grand child process
     status;
     gcp1 = fork();
@@ -20,7 +20,7 @@ int compareFiles(const char *work_dir, int csvFD, struct dirent *pDirent) {
         // if the fork is successful, use comp.out
     else if (gcp1 == 0) {
         chdir(work_dir);
-        char *args2[] = {"./comp.put", "output.txt", "correct_output.txt", NULL};
+        char *args2[] = {"./comp.put", "output.txt", correctPath , NULL};
         if (execvp("./comp.out", args2) != 0) {
             perror("execvp failed when trying to run comparison");
             return -1;
@@ -104,7 +104,7 @@ int runCompiled(int *gcp1, const char *sd_name) {
     return 0;
 }
 
-int runStud(int csvFD, const char *sd_name, DIR *sd, const char *work_dir, struct dirent *pDirent) {
+int runStud(int csvFD, const char *sd_name, DIR *sd, const char *work_dir, struct dirent *pDirent,char* correctPath) {
 //    chdir(sd_name);
     int gcp1; // grand child process
     int foundFlag = 0;
@@ -131,7 +131,7 @@ int runStud(int csvFD, const char *sd_name, DIR *sd, const char *work_dir, struc
                     // parent process
                     wait(&gcp1);
                     // try to fork again to execute compare
-                    if(compareFiles(work_dir, csvFD, pDirent)<0) return -1;
+                    if(compareFiles(work_dir, csvFD, pDirent,correctPath)<0) return -1;
                 }
                     // if gcc compilation error
                 else if (status == 1) {
@@ -162,7 +162,7 @@ int runStud(int csvFD, const char *sd_name, DIR *sd, const char *work_dir, struc
 int main(int argc, char *argv[]) {
     // check number of arguments
     if (argc != 2) {
-        perror("Incorrect number of arguments.");
+        write(2,"Incorrect number of arguments.\n", strlen("Incorrect number of arguments.\n"));
         return -1;
     }
     int errorRd, inRd, outRd, csvFD;
@@ -178,9 +178,7 @@ int main(int argc, char *argv[]) {
         perror("Error in: getcwd()");
         return 1;
     }
-    //dup2(errorRd, 2);
-    close(errorRd);
-    // 4096 is the maximum path length according to google.
+    dup2(errorRd, 2);
     char fileContents[3*CONF_MAX], pathArr[3][CONF_MAX];
 
     // try to open the path passed as argument (the path to the folder)
@@ -267,7 +265,7 @@ int main(int argc, char *argv[]) {
             // open the subdirectory
             sd = opendir(sd_name);
             // fork
-            runStud(csvFD, sd_name, sd, work_dir, pDirent);
+            runStud(csvFD, sd_name, sd, work_dir, pDirent,pathArr[2]);
             //free(sd_name);
             closedir(sd);
             remove("output.txt");

@@ -5,4 +5,4 @@ set(CMAKE_C_STANDARD 11)
 
 include_directories(.)
 
-add_executable(submit ex21.c)
+add_executable(submit ex22.c)
