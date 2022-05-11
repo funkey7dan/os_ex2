@@ -255,8 +255,8 @@ int main(int argc, char *argv[]) {
             }
             dup2(inRd, 0);
             close(outRd);
-            //char *sd_name = (char *) malloc(NAME_MAX);
             char sd_name[NAME_MAX] ;
+
             // add the full path to the directory name
             strcpy(sd_name, pathArr[0]);
             strcat(sd_name, "/");
@@ -264,10 +264,12 @@ int main(int argc, char *argv[]) {
 
             // open the subdirectory
             sd = opendir(sd_name);
+
             // fork
             runStud(csvFD, sd_name, sd, work_dir, pDirent,pathArr[2]);
-            //free(sd_name);
             closedir(sd);
+            strcat(sd_name, "/compiled.out");
+            remove(sd_name);
             remove("output.txt");
         }
 
